@@ -19,7 +19,7 @@ Um eine neue Anleitung hinzuzufügen muss im eine neue .html Datei angelegt werd
 und ein pdf mit der Anleitung erstellt werden. Das pdf wird unter qr.wue.ch/xx/produkt_name im Vollscreen angezeigt.
 
 ## File aktualisieren
-Neuste Version unter dem gleichen Namen ablegen.
+Neuste Version unter dem gleichen Namen ablegen, dann noch den Parameter v (Version) im html ergänzen, damit wird auch sicher das Neuste geladen.
 
 ## Redirects hinzufügen
 Um auf eine Anleitung unter einer anderen Domain zu verweisen muss eine Kopie von redirect_template.html (mit möglichst kurzem Namen) erstellt werden und dort muss dann der Link der Ziel Adresse eingegeben werden. Die neue Adresse wird automatisch unter qr.wue.ch/produkt_name geöffnet
