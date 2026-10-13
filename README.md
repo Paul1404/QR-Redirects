@@ -20,6 +20,7 @@ und ein pdf mit der Anleitung erstellt werden. Das pdf wird unter qr.wue.ch/xx/p
 
 ## File aktualisieren
 Neuste Version unter dem gleichen Namen ablegen, dann noch den Parameter v (Version) im html ergänzen, damit wird auch sicher das Neuste geladen.
+Kann etwas dauern, bis vom Browser die neue html Seite geladen wird.
 
 ## Redirects hinzufügen
 Um auf eine Anleitung unter einer anderen Domain zu verweisen muss eine Kopie von redirect_template.html (mit möglichst kurzem Namen) erstellt werden und dort muss dann der Link der Ziel Adresse eingegeben werden. Die neue Adresse wird automatisch unter qr.wue.ch/produkt_name geöffnet
