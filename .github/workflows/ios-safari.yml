@@ -41,7 +41,7 @@ jobs:
           xcrun simctl boot "$SIMULATOR_ID"
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl status_bar "$SIMULATOR_ID" override --time '9:41' --batteryState charged --batteryLevel 100
-          xcrun simctl openurl "$SIMULATOR_ID" 'https://paul1404.github.io/QR-Redirects/01/hy-alarm'
+          xcrun simctl openurl "$SIMULATOR_ID" 'https://paul1404.github.io/QR-Redirects/01/hy-alarm?ios=ec4dbcd'
       - name: Run native Safari UI tests
         run: |
           set -o pipefail

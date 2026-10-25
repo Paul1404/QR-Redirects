@@ -2,7 +2,7 @@ import XCTest
 
 final class SafariPreviewTests: XCTestCase {
     let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
-    let preview = "https://paul1404.github.io/QR-Redirects/01/hy-alarm"
+    let preview = "https://paul1404.github.io/QR-Redirects/01/hy-alarm?ios=ec4dbcd"
 
     func record(_ name: String) {
         let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -50,12 +50,15 @@ final class SafariPreviewTests: XCTestCase {
         XCTAssertTrue(link.isHittable, "PDF link is not reachable in portrait")
         XCTAssertGreaterThanOrEqual(link.frame.minX, 0)
         XCTAssertLessThanOrEqual(link.frame.maxX, safari.frame.width + 1)
-        record("01-embedded-portrait")
+        XCTAssertTrue(safari.staticTexts["HY-Alarm"].exists, "Native-reader landing page is missing")
+        record("01-mobile-portrait")
         safari.swipeUp()
         safari.swipeUp()
-        record("02-embedded-after-scroll")
+        XCTAssertTrue(link.isHittable, "PDF action disappeared after scrolling")
+        record("02-mobile-after-scroll")
         XCUIDevice.shared.orientation = .landscapeLeft
-        record("03-embedded-landscape")
+        XCTAssertTrue(link.isHittable, "PDF action is not reachable in landscape")
+        record("03-mobile-landscape")
         XCUIDevice.shared.orientation = .portrait
         // Tapping a web link scrolls it into view if needed.
         link = safari.links["PDF in neuem Tab öffnen"]
@@ -70,11 +73,21 @@ final class SafariPreviewTests: XCTestCase {
         let url = field.value as? String ?? ""
         XCTAssertTrue(url.contains("/01/pdf/Kundenanleitung_HY_Alarm.pdf"), "Direct link did not open the original PDF: \(url)")
         field.typeText("\n")
-        // Exercise native document scrolling and preserve screenshots for visual review.
+        let title = safari.staticTexts["HY-ALARM"].firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 15), "Native PDF content did not render")
+        let originalWidth = title.frame.width
+        safari.webViews.firstMatch.pinch(withScale: 1.5, velocity: 1)
+        XCTAssertGreaterThan(title.frame.width, originalWidth * 1.1, "Native PDF zoom did not enlarge the content")
+        record("05-direct-pdf-zoomed")
+        safari.webViews.firstMatch.pinch(withScale: 1.0 / 1.5, velocity: -1)
+        // Verify the last page is reachable, not just that the first page loads.
         for _ in 0..<14 { safari.swipeUp() }
-        record("05-direct-pdf-after-scroll")
+        let lastPage = safari.staticTexts["10 WARTUNGSPROTOKOLL"].firstMatch
+        XCTAssertTrue(lastPage.waitForExistence(timeout: 10))
+        XCTAssertTrue(lastPage.isHittable, "Page 12 is not visible after scrolling")
+        record("06-direct-pdf-page-12")
         XCUIDevice.shared.orientation = .landscapeLeft
-        record("06-direct-pdf-landscape")
+        record("07-direct-pdf-landscape")
         XCUIDevice.shared.orientation = .portrait
     }
 }
