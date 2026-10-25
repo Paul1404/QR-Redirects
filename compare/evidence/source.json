@@ -1,0 +1,15 @@
+{
+  "device": "iPhone 16 Simulator",
+  "ios": "26.2",
+  "original_commit": "0676bc98d9bf9af688288ddecb2c3a13edf108c4",
+  "new_commit": "c63b566db338bf15f36b11c3d7fb0555bc667ce8",
+  "original_run": "https://github.com/Paul1404/QR-Redirects/actions/runs/40204017471",
+  "new_run": "https://github.com/Paul1404/QR-Redirects/actions/runs/40200760495",
+  "original_pdf_image_width_points": 596.0,
+  "viewport_width_points": 393.0,
+  "pdf_sha256": "43052b487ac51ad6fe8590322ed492c52946078b887308d2759e1daf241e0809",
+  "screenshots": {
+    "original-0676bc9-ios26-2.png": "25be59c3bcfbdcf8bc26e07d747b039fd1928ac786b0a9e597dff47662658c92",
+    "direct-c63b566-ios26-2.png": "e15c237ae2a74ac6eaa671e5ec574a0109ad54967f567634be80a86ad9376321"
+  }
+}
