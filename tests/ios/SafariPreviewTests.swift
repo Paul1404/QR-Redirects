@@ -81,13 +81,15 @@ final class SafariPreviewTests: XCTestCase {
         record("05-direct-pdf-zoomed")
         // Verify the last page is reachable, not just that the first page loads.
         let lastPage = safari.staticTexts["10 WARTUNGSPROTOKOLL"].firstMatch
+        let pageIndicator = safari.staticTexts["12 of 12"].firstMatch
         for _ in 0..<40 {
-            if lastPage.exists && lastPage.isHittable { break }
+            if pageIndicator.exists { break }
             safari.webViews.firstMatch.swipeUp(velocity: .slow)
         }
         record("06-direct-pdf-scroll-position")
-        XCTAssertTrue(lastPage.waitForExistence(timeout: 10))
-        XCTAssertTrue(lastPage.isHittable, "Page 12 is not visible after scrolling")
+        XCTAssertTrue(pageIndicator.waitForExistence(timeout: 10), "Safari did not reach page 12")
+        XCTAssertTrue(pageIndicator.frame.intersects(safari.frame), "Last-page indicator is not on screen")
+        XCTAssertTrue(lastPage.exists, "The original manual's final-page content is missing")
         record("06-direct-pdf-page-12")
         XCUIDevice.shared.orientation = .landscapeLeft
         record("07-direct-pdf-landscape")
