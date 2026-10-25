@@ -22,16 +22,15 @@ final class SafariPreviewTests: XCTestCase {
             let button = safari.buttons["Continue"]
             if button.waitForExistence(timeout: 2) { button.tap() }
         }
-        let field = safari.textFields["URL"].exists ? safari.textFields["URL"] : safari.textFields["Address"]
-        XCTAssertTrue(field.waitForExistence(timeout: 15))
-        field.tap()
-        XCTAssertTrue((field.value as? String ?? "").contains("/compare/original/01/hy-alarm"))
-        field.typeText("\n")
-        XCTAssertTrue(safari.images.firstMatch.waitForExistence(timeout: 60), "Original iframe PDF image did not render")
-        let oversized = safari.images.allElementsBoundByIndex.filter { $0.frame.width > safari.frame.width + 1 }
-        XCTAssertFalse(oversized.isEmpty, "The original horizontal PDF overflow was not reproduced")
-        for image in oversized { print("Original PDF image width: \(image.frame.width); iPhone viewport width: \(safari.frame.width)") }
+        let original = safari.otherElements["PDF Viewer"].firstMatch
+        XCTAssertTrue(original.waitForExistence(timeout: 60), "Original HTML document did not load")
+        let pdfImage = original.images.firstMatch
+        XCTAssertTrue(pdfImage.waitForExistence(timeout: 30), "Original iframe PDF image did not render")
         record("01-original-iframe-portrait")
+        let imageWidth = pdfImage.frame.width
+        let viewportWidth = safari.frame.width
+        print("Original PDF image width: \(imageWidth); iPhone viewport width: \(viewportWidth)")
+        XCTAssertGreaterThan(imageWidth, viewportWidth + 1, "Original horizontal overflow was not reproduced")
         for _ in 0..<6 { safari.webViews.firstMatch.swipeUp(velocity: .slow) }
         record("02-original-iframe-after-scroll")
         XCUIDevice.shared.orientation = .landscapeLeft
