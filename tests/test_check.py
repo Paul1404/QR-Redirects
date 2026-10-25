@@ -1,6 +1,5 @@
-"""Exercise the validator against small, isolated publishing mistakes."""
-
-import hashlib
+"""Protect PDF-only publishing and the addresses already printed on QR codes."""
+from html.parser import HTMLParser
 from pathlib import Path
 import shutil
 import subprocess
@@ -8,7 +7,7 @@ import sys
 import tempfile
 import unittest
 
-SCRIPT = Path(__file__).resolve().parents[1] / 'scripts' / 'check.py'
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class PublishingChecks(unittest.TestCase):
@@ -17,18 +16,17 @@ class PublishingChecks(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         (self.root / 'scripts').mkdir()
-        shutil.copy2(SCRIPT, self.root / 'scripts' / 'check.py')
-        (self.root / '01' / 'pdf').mkdir(parents=True)
-        self.pdf = self.root / '01' / 'pdf' / 'manual.pdf'
+        shutil.copy2(ROOT / 'scripts/check.py', self.root / 'scripts/check.py')
+        (self.root / '01/pdf').mkdir(parents=True)
+        self.pdf = self.root / '01/pdf/manual.pdf'
         self.pdf.write_bytes(b'%PDF-1.4\nfixture\n%%EOF\n')
-        self.page = self.root / '01' / 'manual.html'
-        self.url = 'pdf/manual.pdf?v=' + hashlib.sha256(self.pdf.read_bytes()).hexdigest()[:12]
-        self.valid = (f'<a href="{self.url}" target="_blank" rel="noopener">Open PDF</a>'
-                      f'<iframe src="{self.url}" title="Manual"></iframe>')
-        self.page.write_text(self.valid, encoding='utf-8')
+        self.page = self.root / '01/manual.html'
+        self.valid = ('<meta http-equiv="refresh" content="0; url=pdf/manual.pdf">'
+                      '<a href="pdf/manual.pdf">Open PDF</a>')
+        self.page.write_text(self.valid)
 
-    def check(self, *args):
-        return subprocess.run([sys.executable, str(self.root / 'scripts' / 'check.py'), *args],
+    def check(self):
+        return subprocess.run([sys.executable, 'scripts/check.py'], cwd=self.root,
                               capture_output=True, text=True)
 
     def reject(self, message):
@@ -36,88 +34,69 @@ class PublishingChecks(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(message, result.stderr)
 
-    def test_valid_manual(self):
+    def test_existing_alias_is_valid(self):
         self.assertEqual(self.check().returncode, 0)
 
-    def test_deleted_pdf_is_rejected(self):
+    def test_new_pdf_needs_no_html_page(self):
+        before = self.page.read_bytes()
+        self.pdf.with_name('new-product.pdf').write_bytes(b'%PDF-1.7\nnew manual\n%%EOF\n')
+        self.assertEqual(self.check().returncode, 0)
+        self.assertEqual(self.page.read_bytes(), before)
+        self.assertEqual(len(list(self.root.rglob('*.html'))), 1)
+
+    def test_replacing_pdf_needs_no_other_edits(self):
+        before = self.page.read_bytes()
+        self.pdf.write_bytes(b'%PDF-1.7\nupdated manual\n%%EOF\n')
+        self.assertEqual(self.check().returncode, 0)
+        self.assertEqual(self.page.read_bytes(), before)
+
+    def test_missing_pdf_is_rejected(self):
         self.pdf.unlink()
         self.reject('missing target')
 
-    def test_replaced_pdf_requires_new_versions(self):
-        self.pdf.write_bytes(self.pdf.read_bytes() + b'updated')
-        self.reject('stale PDF version')
-        result = self.check('--update')
-        self.assertEqual(result.returncode, 0, result.stderr)
-        version = hashlib.sha256(self.pdf.read_bytes()).hexdigest()[:12]
-        self.assertEqual(self.page.read_text().count('v=' + version), 2)
+    def test_renamed_non_pdf_is_rejected(self):
+        self.pdf.write_bytes(b'This is not a PDF export')
+        self.reject('no PDF header')
+
+    def test_redirect_link_must_match(self):
+        self.page.write_text(self.valid.replace('href="pdf/manual.pdf"', 'href="https://example.com"'))
+        self.reject('matching visible link')
+
+    def test_external_redirect_requires_https(self):
+        self.page.write_text(self.valid.replace('pdf/manual.pdf', 'http://example.com'))
+        self.reject('must use HTTPS')
+        self.page.write_text(self.valid.replace('pdf/manual.pdf', 'https://example.com'))
         self.assertEqual(self.check().returncode, 0)
 
-    def test_update_is_idempotent(self):
-        self.assertEqual(self.check('--update').returncode, 0)
-        before = self.page.read_bytes()
-        self.assertEqual(self.check('--update').returncode, 0)
-        self.assertEqual(self.page.read_bytes(), before)
+    def test_redirect_target_must_be_valid(self):
+        self.page.write_text('<meta http-equiv="refresh" content="0">')
+        self.reject('invalid refresh target')
 
-    def test_missing_pdf_fallback_is_rejected(self):
-        self.page.write_text(f'<iframe src="{self.url}"></iframe>')
-        self.reject('needs a direct link')
+    def test_links_cannot_escape_repository(self):
+        for url in ('../../../outside.pdf', '%2e%2e/%2e%2e/outside.pdf'):
+            with self.subTest(url=url):
+                self.page.write_text(f'<a href="{url}">Outside</a>')
+                self.reject('target outside repository')
 
-    def test_fallback_to_different_pdf_is_rejected(self):
-        other = self.pdf.with_name('other.pdf')
-        shutil.copy2(self.pdf, other)
-        self.page.write_text(self.valid.replace('href="pdf/manual', 'href="pdf/other'))
-        self.reject('needs a direct link')
-
-    def test_fallback_must_keep_original_viewer_open(self):
-        self.page.write_text(self.valid.replace('target="_blank"', 'target="_self"'))
-        self.reject('must open a new tab')
-
-    def test_fallback_must_isolate_opener(self):
-        self.page.write_text(self.valid.replace('rel="noopener"', ''))
-        self.reject('with noopener')
-
-    def test_redirect_must_match_visible_link(self):
-        self.page.write_text('<meta http-equiv="refresh" content="0; url=https://example.com">'
-                             '<a href="https://other.example">Continue</a>')
-        self.reject('matching HTTPS fallback')
-
-    def test_redirect_must_use_https(self):
-        self.page.write_text('<meta http-equiv="refresh" content="0; url=http://example.com">'
-                             '<a href="http://example.com">Continue</a>')
-        self.reject('matching HTTPS fallback')
-
-    def test_template_placeholder_stays_unchanged(self):
-        folder = self.root / '00_templates'
-        folder.mkdir()
-        template = folder / 'pdf.html'
-        template.write_text(self.valid.replace(self.url, 'file_path.pdf'))
-        before = template.read_bytes()
-        self.assertEqual(self.check('--update').returncode, 0)
-        self.assertEqual(template.read_bytes(), before)
-
-    def test_placeholder_in_product_page_is_rejected(self):
-        self.page.write_text(self.valid.replace(self.url, 'file_path.pdf'))
-        self.reject('missing target')
-
-    def test_update_handles_single_quotes_and_escaped_query(self):
-        self.page.write_text(self.valid.replace(self.url, 'pdf/manual.pdf?lang=de&amp;v=old#page=2')
-                             .replace('"', "'"))
-        result = self.check('--update')
-        self.assertEqual(result.returncode, 0, result.stderr)
-        source = self.page.read_text()
-        self.assertEqual(source.count('lang=de&amp;v='), 2)
-        self.assertEqual(source.count('#page=2'), 2)
-        self.assertNotIn('v=old', source)
-
-    def test_target_cannot_escape_repository(self):
-        self.page.write_text('<a href="../../../outside.pdf">Outside</a>')
-        self.reject('target outside repository')
-
-    def test_url_encoded_local_filename(self):
-        spaced = self.pdf.with_name('manual de.pdf')
-        self.pdf.rename(spaced)
+    def test_encoded_filename_is_supported(self):
+        self.pdf.rename(self.pdf.with_name('manual de.pdf'))
         self.page.write_text(self.valid.replace('manual.pdf', 'manual%20de.pdf'))
         self.assertEqual(self.check().returncode, 0)
+
+
+class PrintedQRContract(unittest.TestCase):
+    def test_hy_alarm_keeps_its_existing_address_and_pdf(self):
+        class Redirect(HTMLParser):
+            target = None
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'meta' and attrs.get('http-equiv') == 'refresh':
+                    self.target = attrs['content']
+        page = ROOT / '01/hy-alarm.html'
+        parsed = Redirect()
+        parsed.feed(page.read_text())
+        self.assertEqual(parsed.target, '0; url=pdf/Kundenanleitung_HY_Alarm.pdf')
+        self.assertTrue((ROOT / '01/pdf/Kundenanleitung_HY_Alarm.pdf').is_file())
 
 
 if __name__ == '__main__':
