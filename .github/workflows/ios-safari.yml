@@ -61,7 +61,9 @@ jobs:
         with:
           name: iphone-safari-results
           path: |
-            artifacts/screenshots/
+            artifacts/screenshots/*.png
+            artifacts/screenshots/*.txt
+            artifacts/screenshots/manifest.json
             artifacts/*.txt
             artifacts/*.log
             artifacts/final-screen.png
