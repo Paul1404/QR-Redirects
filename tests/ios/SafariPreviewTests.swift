@@ -79,12 +79,11 @@ final class SafariPreviewTests: XCTestCase {
         safari.webViews.firstMatch.pinch(withScale: 1.5, velocity: 1)
         XCTAssertGreaterThan(title.frame.width, originalWidth * 1.1, "Native PDF zoom did not enlarge the content")
         record("05-direct-pdf-zoomed")
-        safari.webViews.firstMatch.pinch(withScale: 1.0 / 1.5, velocity: -1)
         // Verify the last page is reachable, not just that the first page loads.
         let lastPage = safari.staticTexts["10 WARTUNGSPROTOKOLL"].firstMatch
         for _ in 0..<40 {
             if lastPage.exists && lastPage.isHittable { break }
-            safari.swipeUp()
+            safari.webViews.firstMatch.swipeUp(velocity: .slow)
         }
         record("06-direct-pdf-scroll-position")
         XCTAssertTrue(lastPage.waitForExistence(timeout: 10))
