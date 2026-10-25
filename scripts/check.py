@@ -33,6 +33,7 @@ class Page(HTMLParser):
         self.links = []
         self.pdf_frames = []
         self.anchors = []
+        self.anchor_attrs = {}
         self.redirects = []
 
     def handle_starttag(self, tag, attrs):
@@ -44,6 +45,7 @@ class Page(HTMLParser):
             self.pdf_frames.append(attrs['src'])
         if tag == 'a' and attrs.get('href'):
             self.anchors.append(attrs['href'])
+            self.anchor_attrs[attrs['href']] = attrs
         if tag == 'meta' and attrs.get('http-equiv', '').lower() == 'refresh':
             match = re.search(r'url=(.+)', attrs.get('content', ''), re.IGNORECASE)
             if match:
@@ -63,7 +65,7 @@ def main():
         source = page.read_text(encoding='utf-8')
         if options.update and not template:
             def update(match):
-                url = unescape(match.group(2))
+                url = unescape(match.group('url'))
                 target = local_target(page, url)
                 if target is None or target.suffix.lower() != '.pdf' or not target.is_file():
                     return match.group(0)
@@ -71,8 +73,8 @@ def main():
                 query = [(key, value) for key, value in parse_qsl(parts.query) if key != 'v']
                 query.append(('v', pdf_version(target)))
                 versioned = urlunsplit(parts._replace(query=urlencode(query)))
-                return match.group(1) + escape(versioned, quote=True) + match.group(3)
-            source = re.sub(r'((?:href|src)=")([^"]*)(")', update, source)
+                return match.group('prefix') + match.group('quote') + escape(versioned, quote=True) + match.group('quote')
+            source = re.sub(r"""(?P<prefix>\b(?:href|src)\s*=\s*)(?P<quote>["'])(?P<url>.*?)(?P=quote)""", update, source)
             page.write_text(source, encoding='utf-8')
         parsed = Page()
         parsed.feed(source)
@@ -95,6 +97,10 @@ def main():
         for url in parsed.pdf_frames:
             if urlsplit(url).path.lower().endswith('.pdf') and url not in parsed.anchors:
                 errors.append(f'{page.relative_to(ROOT)}: PDF iframe needs a direct link to the same URL')
+            elif urlsplit(url).path.lower().endswith('.pdf'):
+                link = parsed.anchor_attrs[url]
+                if link.get('target') != '_blank' or 'noopener' not in link.get('rel', '').split():
+                    errors.append(f'{page.relative_to(ROOT)}: direct PDF link must open a new tab with noopener')
     if errors:
         raise SystemExit('\n'.join(errors))
     print(f'Checked {len(pages)} HTML pages: targets, PDF versions, and fallback links OK.')
