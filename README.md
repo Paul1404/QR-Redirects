@@ -9,7 +9,9 @@ und keine Laufzeitabhängigkeiten.
 
 - <https://qr.wue.ch/> leitet auf <https://wue.ch> weiter.
 - <https://qr.wue.ch/01/hy-alarm> öffnet die HY-Alarm-Anleitung mit einem
-  zusätzlichen direkten PDF-Link in einem neuen Tab.
+  zusätzlichen direkten PDF-Link in einem neuen Tab. Auf kleineren Bildschirmen
+  und Touch-Geräten öffnet dieser Link die Anleitung im PDF-Reader des Browsers;
+  größere Bildschirme bieten zusätzlich die eingebettete Vorschau.
 
 Die Adresse auf einem gedruckten QR-Code muss dauerhaft bestehen bleiben.
 Deshalb die HTML-Seite beim Austausch einer Anleitung nicht umbenennen oder

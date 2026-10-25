@@ -16,13 +16,30 @@
       }
       header { padding: 0.75rem 1rem; }
       a { color: #0645ad; }
-      a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+      a:focus-visible { outline: 3px solid #0645ad; outline-offset: 4px; }
       iframe { width: 100%; flex: 1; min-height: 0; border: 0; }
+      h1, .document-description { display: none; }
+      @media (max-width: 900px), (hover: none) and (pointer: coarse) {
+        iframe { display: none; }
+        header { width: 100%; max-width: 36rem; margin: auto; padding: 2rem 1.5rem; }
+        h1 { display: block; margin: 0 0 0.5rem; font-size: 1.75rem; }
+        .document-description { display: block; margin: 0 0 1.5rem; line-height: 1.5; }
+        a {
+          display: inline-block;
+          padding: 0.875rem 1rem;
+          border-radius: 0.5rem;
+          background: #0645ad;
+          color: white;
+          line-height: 1.5;
+        }
+      }
     </style>
   </head>
   <body>
     <header>
       <!-- Bei neuen Anleitungen Produktname und beide PDF-Pfade anpassen. -->
+      <h1>HY-Alarm</h1>
+      <p class="document-description">Betriebs- und Installationsanleitung</p>
       <a href="pdf/Kundenanleitung_HY_Alarm.pdf?v=43052b487ac5" target="_blank" rel="noopener">PDF in neuem Tab öffnen</a>
     </header>
     <iframe src="pdf/Kundenanleitung_HY_Alarm.pdf?v=43052b487ac5" title="HY-Alarm: Betriebs- und Installationsanleitung"></iframe>
