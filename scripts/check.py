@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""Check static page targets; --update refreshes PDF versions from file contents."""
+"""Validate published PDFs and static links without changing any files."""
 
 import argparse
-import hashlib
-from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 import re
-from urllib.parse import parse_qsl, unquote, urlencode, urlsplit, urlunsplit
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,94 +14,68 @@ def local_target(page, url):
     parts = urlsplit(url)
     if parts.scheme or parts.netloc or not parts.path:
         return None
-    target = ((ROOT / unquote(parts.path).lstrip('/')) if parts.path.startswith('/')
-              else page.parent / unquote(parts.path)).resolve()
+    path = unquote(parts.path)
+    target = (ROOT / path.lstrip('/') if path.startswith('/') else page.parent / path).resolve()
     if not target.is_relative_to(ROOT):
-        raise ValueError(f'{page.relative_to(ROOT)}: target outside repository: {url}')
+        raise ValueError(f'target outside repository: {url}')
     return target
-
-
-def pdf_version(target):
-    return hashlib.sha256(target.read_bytes()).hexdigest()[:12]
 
 
 class Page(HTMLParser):
     def __init__(self):
         super().__init__()
-        self.links = []
-        self.pdf_frames = []
-        self.anchors = []
-        self.anchor_attrs = {}
-        self.redirects = []
+        self.links, self.anchors, self.redirects, self.errors = [], [], [], []
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        for key in ('href', 'src', 'data'):
-            if attrs.get(key):
-                self.links.append(attrs[key])
-        if tag == 'iframe' and attrs.get('src'):
-            self.pdf_frames.append(attrs['src'])
+        self.links.extend(attrs[key] for key in ('href', 'src', 'data') if attrs.get(key))
         if tag == 'a' and attrs.get('href'):
             self.anchors.append(attrs['href'])
-            self.anchor_attrs[attrs['href']] = attrs
         if tag == 'meta' and attrs.get('http-equiv', '').lower() == 'refresh':
-            match = re.search(r'url=(.+)', attrs.get('content', ''), re.IGNORECASE)
+            match = re.fullmatch(r'\s*\d+\s*;\s*url\s*=\s*(.+?)\s*', attrs.get('content') or '', re.IGNORECASE)
             if match:
-                self.redirects.append(match.group(1).strip())
+                self.redirects.append(match.group(1))
+                self.links.append(match.group(1))
+            else:
+                self.errors.append('invalid refresh target')
 
 
 def main():
-    args = argparse.ArgumentParser(description=__doc__)
-    args.add_argument('--update', action='store_true', help='Update PDF cache versions before checking')
-    options = args.parse_args()
-    errors = []
-    pages = sorted(ROOT.glob('**/*.html')) + sorted(ROOT.glob('**/*.htm'))
-    for page in pages:
-        if '.git' in page.relative_to(ROOT).parts:
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    errors, pages, pdfs = [], 0, 0
+    for path in sorted(ROOT.rglob('*')):
+        relative = path.relative_to(ROOT)
+        if not path.is_file() or any(part.startswith('.') for part in relative.parts):
             continue
-        template = page.relative_to(ROOT).parts[0] == '00_templates'
-        source = page.read_text(encoding='utf-8')
-        if options.update and not template:
-            def update(match):
-                url = unescape(match.group('url'))
-                target = local_target(page, url)
-                if target is None or target.suffix.lower() != '.pdf' or not target.is_file():
-                    return match.group(0)
+        try:
+            if not path.resolve().is_relative_to(ROOT):
+                raise ValueError('file points outside repository')
+            if path.suffix.lower() == '.pdf':
+                pdfs += 1
+                with path.open('rb') as file:
+                    if b'%PDF-' not in file.read(1024):
+                        raise ValueError('file has no PDF header')
+            if path.suffix.lower() not in ('.html', '.htm'):
+                continue
+            pages += 1
+            parsed = Page()
+            parsed.feed(path.read_text(encoding='utf-8'))
+            errors.extend(f'{relative}: {error}' for error in parsed.errors)
+            for url in parsed.links:
+                target = local_target(path, url)
+                if target is not None and not target.is_file():
+                    errors.append(f'{relative}: missing target: {url}')
+            for url in parsed.redirects:
                 parts = urlsplit(url)
-                query = [(key, value) for key, value in parse_qsl(parts.query) if key != 'v']
-                query.append(('v', pdf_version(target)))
-                versioned = urlunsplit(parts._replace(query=urlencode(query)))
-                return match.group('prefix') + match.group('quote') + escape(versioned, quote=True) + match.group('quote')
-            source = re.sub(r"""(?P<prefix>\b(?:href|src)\s*=\s*)(?P<quote>["'])(?P<url>.*?)(?P=quote)""", update, source)
-            page.write_text(source, encoding='utf-8')
-        parsed = Page()
-        parsed.feed(source)
-        for url in parsed.links:
-            # This placeholder is replaced when copying the PDF template.
-            if template and url == 'file_path.pdf':
-                continue
-            target = local_target(page, url)
-            if target is None:
-                continue
-            if not target.is_file():
-                errors.append(f'{page.relative_to(ROOT)}: missing target: {url}')
-            elif target.suffix.lower() == '.pdf' and not template:
-                versions = dict(parse_qsl(urlsplit(url).query))
-                if versions.get('v') != pdf_version(target):
-                    errors.append(f'{page.relative_to(ROOT)}: stale PDF version: run python3 scripts/check.py --update')
-        for url in parsed.redirects:
-            if not url.startswith('https://') or url not in parsed.anchors:
-                errors.append(f'{page.relative_to(ROOT)}: redirect needs a matching HTTPS fallback link')
-        for url in parsed.pdf_frames:
-            if urlsplit(url).path.lower().endswith('.pdf') and url not in parsed.anchors:
-                errors.append(f'{page.relative_to(ROOT)}: PDF iframe needs a direct link to the same URL')
-            elif urlsplit(url).path.lower().endswith('.pdf'):
-                link = parsed.anchor_attrs[url]
-                if link.get('target') != '_blank' or 'noopener' not in link.get('rel', '').split():
-                    errors.append(f'{page.relative_to(ROOT)}: direct PDF link must open a new tab with noopener')
+                if (parts.scheme or parts.netloc) and not (parts.scheme == 'https' and parts.netloc):
+                    errors.append(f'{relative}: external redirect must use HTTPS')
+                if url not in parsed.anchors:
+                    errors.append(f'{relative}: redirect needs a matching visible link')
+        except ValueError as error:
+            errors.append(f'{relative}: {error}')
     if errors:
         raise SystemExit('\n'.join(errors))
-    print(f'Checked {len(pages)} HTML pages: targets, PDF versions, and fallback links OK.')
+    print(f'Checked {pdfs} PDFs and {pages} HTML pages. Files and redirect links OK.')
 
 
 if __name__ == '__main__':

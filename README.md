@@ -1,86 +1,61 @@
-# QR Redirect
+# Produktanleitungen per QR-Code
 
-Stabile Kurzlinks für QR-Codes und Produktanleitungen unter <https://qr.wue.ch>.
-Die Website besteht aus statischen HTML-Seiten und PDFs. GitHub Pages
-veröffentlicht den Inhalt von `main` im Stammverzeichnis. Es gibt keinen Build
-und keine Laufzeitabhängigkeiten.
+## Neue Anleitung veröffentlichen
 
-## Bestehende Links
+1. Die PDF in `01/pdf/` hochladen und speichern. Einen dauerhaften Dateinamen
+   ohne Datum oder Versionsnummer wählen, beispielsweise `produkt.pdf`.
+2. Nach der Veröffentlichung die PDF öffnen und ihre vollständige HTTPS-Adresse
+   für den QR-Code verwenden. Beispiel: `https://qr.wue.ch/01/pdf/produkt.pdf`.
+3. Den erzeugten QR-Code scannen und die Anleitung prüfen.
 
-- <https://qr.wue.ch/> leitet auf <https://wue.ch> weiter.
-- <https://qr.wue.ch/01/hy-alarm> öffnet die HY-Alarm-Anleitung mit einem
-  zusätzlichen direkten PDF-Link in einem neuen Tab. Auf kleineren Bildschirmen
-  und Touch-Geräten öffnet dieser Link die Anleitung im PDF-Reader des Browsers;
-  größere Bildschirme bieten zusätzlich die eingebettete Vorschau.
-
-Die Adresse auf einem gedruckten QR-Code muss dauerhaft bestehen bleiben.
-Deshalb die HTML-Seite beim Austausch einer Anleitung nicht umbenennen oder
-löschen. `CNAME` legt die Domain fest und darf nicht versehentlich geändert werden.
-
-## Neue Anleitung hinzufügen
-
-1. `00_templates/pdf_viewer_template.html` nach beispielsweise
-   `01/produkt.html` kopieren.
-2. Die PDF-Datei unter `01/pdf/` ablegen.
-3. In der HTML-Seite den Produktnamen im Seitentitel und im iframe-Titel
-   eintragen. Den Platzhalter `file_path.pdf` an beiden Stellen durch denselben
-   relativen PDF-Pfad ersetzen, zum Beispiel `pdf/Produkt.pdf`.
-4. Im Repository ausführen:
-
-   ```sh
-   python3 scripts/check.py --update
-   python3 scripts/check.py
-   python3 -m unittest discover -s tests -v
-   ```
-
-5. HTML und PDF gemeinsam committen. Nach der Veröffentlichung die vollständige
-   HTTPS-Adresse aufrufen und den direkten PDF-Link prüfen. Erst danach den
-   QR-Code erstellen und auf einem Smartphone testen.
+Dafür ist keine HTML-Seite oder Kopiervorlage erforderlich.
 
 ## Anleitung aktualisieren
 
-Die PDF unter ihrem bestehenden Namen ersetzen und
-`python3 scripts/check.py --update` ausführen. Der Befehl berechnet die Version
-`?v=...` aus dem SHA-256-Inhalt der PDF und aktualisiert sowohl den Viewer als
-auch den direkten Link. PDF und geänderte HTML-Datei gemeinsam committen.
+Die vorhandene PDF durch die neue Fassung **unter demselben Namen im selben
+Ordner ersetzen**. Weitere Dateien müssen nicht bearbeitet werden. Die Adresse
+bleibt gleich und bereits gedruckte QR-Codes bleiben gültig.
 
-`python3 scripts/check.py` und die GitHub-Actions-Prüfung melden fehlende lokale
-Dateien, veraltete PDF-Versionen und fehlende direkte PDF-Links. Die Prüfung
-verwendet nur die Python-Standardbibliothek (Python 3.9 oder neuer) und benötigt
-keine zusätzlichen Pakete.
+GitHub Pages und Browser können noch kurz eine vorherige Fassung anzeigen.
+Nach der Veröffentlichung neu laden und die neue Fassung kontrollieren.
 
-Die neue Version wird angefordert, sobald die aktualisierte HTML-Seite geladen
-wird. GitHub Pages und Browser können die HTML-Seite selbst noch zwischenspeichern.
-Ein Versionsparameter erzwingt deshalb keine sofortige Aktualisierung bei allen
-Besuchern. Nach dem Deployment neu laden und die veröffentlichte Version prüfen.
+## Bereits gedruckte QR-Codes
 
-## Externe Weiterleitung hinzufügen
+Die bestehende Adresse <https://qr.wue.ch/01/hy-alarm> bleibt erhalten.
+`01/hy-alarm.html` leitet automatisch auf die unveränderte PDF-Adresse weiter:
 
-`00_templates/redirect_template.html` kopieren. Die HTTPS-Zieladresse sowohl
-im `meta`-Refresh als auch im sichtbaren Link anpassen und den Seitentitel
-aktualisieren. Anschließend die lokale Prüfung ausführen und die Weiterleitung
-nach der Veröffentlichung testen.
+<https://qr.wue.ch/01/pdf/Kundenanleitung_HY_Alarm.pdf>
 
-## QR-Code erstellen
+Diese kleine Weiterleitung wird beim Austausch der PDF nicht angepasst.
+Der gespeicherte QR-Code `01/qr_01_HY-Alarm.png` zeigt für neue Ausdrucke direkt
+auf die PDF. Alte HTTP-Codes funktionieren weiterhin über die bestehende
+HTTPS-Weiterleitung.
 
-Der QR-Code muss direkt die stabile HTTPS-Adresse enthalten, zum Beispiel
-`https://qr.wue.ch/01/hy-alarm`. Keine PDF-Adresse, Versionsparameter oder
-Weiterleitungsadresse eines QR-Anbieters verwenden. Der gespeicherte Code
-`01/qr_01_HY-Alarm.png` verwendet diese HTTPS-Adresse. Bereits gedruckte
-HTTP-Codes funktionieren weiterhin über die bestehende HTTPS-Weiterleitung.
+## Betrieb und Prüfung
 
-## Vorlagen und lokale Vorschau
+Die Website besteht aus statischen Dateien. GitHub Pages veröffentlicht `main`
+aus dem Stammverzeichnis; `CNAME` legt die bestehende Domain fest.
+Die Startseite leitet weiterhin zu <https://wue.ch> weiter.
 
-`00_templates/` enthält Kopiervorlagen und ein einfaches HTML-Beispiel. Die
-Vorlagen sind keine fertigen Produktseiten. Platzhalter vor dem Veröffentlichen
-einer kopierten Seite ersetzen. Keine Word-HTML-Exporte mit fehlenden
-Begleitdateien übernehmen.
+Die automatische Prüfung meldet fehlende lokale Dateien, unpassende
+Weiterleitungslinks und Dateien ohne PDF-Kennung. Sie verändert keine Dateien
+und benötigt keine zusätzlichen Python-Pakete.
 
-Für eine lokale Vorschau `python3 -m http.server 8765 --bind 127.0.0.1` ausführen
-und <http://127.0.0.1:8765/01/hy-alarm.html> öffnen. Ein einfacher lokaler Server
-bietet die endungslosen GitHub-Pages-Adressen nicht an, daher lokal `.html`
-verwenden. Die Vorschau anschließend mit Strg+C beenden.
+Für die lokale Prüfung mit Python 3.9 oder neuer:
 
-Ein Fork übernimmt durch `CNAME` nicht die Domain des Originals. GitHub Pages
-im Fork nur bei Bedarf separat konfigurieren und dafür keine fremde Domain
-beanspruchen.
+```sh
+python3 scripts/check.py
+python3 -m unittest discover -s tests -v
+```
+
+`00_templates/redirect_template.html` ist nur für optionale Weiterleitungen
+auf externe Adressen vorgesehen. Für neue PDF-Anleitungen wird sie nicht benötigt.
+
+Eine lokale Vorschau lässt sich mit
+`python3 -m http.server 8765 --bind 127.0.0.1` starten. Die bestehende Weiterleitung
+lokal unter <http://127.0.0.1:8765/01/hy-alarm.html> testen, da der einfache Server
+keine endungslosen HTML-Adressen auflöst. Anschließend die Vorschau mit Strg+C
+beenden.
+
+Ein Fork übernimmt die Domain des Originals nicht. Für Vorschauen keine fremde
+Domain konfigurieren.
