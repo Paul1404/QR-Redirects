@@ -81,8 +81,12 @@ final class SafariPreviewTests: XCTestCase {
         record("05-direct-pdf-zoomed")
         safari.webViews.firstMatch.pinch(withScale: 1.0 / 1.5, velocity: -1)
         // Verify the last page is reachable, not just that the first page loads.
-        for _ in 0..<14 { safari.swipeUp() }
         let lastPage = safari.staticTexts["10 WARTUNGSPROTOKOLL"].firstMatch
+        for _ in 0..<40 {
+            if lastPage.exists && lastPage.isHittable { break }
+            safari.swipeUp()
+        }
+        record("06-direct-pdf-scroll-position")
         XCTAssertTrue(lastPage.waitForExistence(timeout: 10))
         XCTAssertTrue(lastPage.isHittable, "Page 12 is not visible after scrolling")
         record("06-direct-pdf-page-12")
