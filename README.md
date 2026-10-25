@@ -9,7 +9,7 @@ und keine Laufzeitabhängigkeiten.
 
 - <https://qr.wue.ch/> leitet auf <https://wue.ch> weiter.
 - <https://qr.wue.ch/01/hy-alarm> öffnet die HY-Alarm-Anleitung mit einem
-  zusätzlichen direkten PDF-Link.
+  zusätzlichen direkten PDF-Link in einem neuen Tab.
 
 Die Adresse auf einem gedruckten QR-Code muss dauerhaft bestehen bleiben.
 Deshalb die HTML-Seite beim Austausch einer Anleitung nicht umbenennen oder
@@ -28,6 +28,7 @@ löschen. `CNAME` legt die Domain fest und darf nicht versehentlich geändert we
    ```sh
    python3 scripts/check.py --update
    python3 scripts/check.py
+   python3 -m unittest discover -s tests -v
    ```
 
 5. HTML und PDF gemeinsam committen. Nach der Veröffentlichung die vollständige
