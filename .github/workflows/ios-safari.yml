@@ -11,7 +11,7 @@ permissions:
 jobs:
   safari:
     if: github.repository == 'Paul1404/QR-Redirects'
-    runs-on: macos-15-arm64
+    runs-on: macos-15
     timeout-minutes: 20
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
