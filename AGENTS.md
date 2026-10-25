@@ -15,3 +15,11 @@
   browser's native reader; verify opening, zoom and scrolling when changing routing.
 - Preview with `python3 -m http.server 8765 --bind 127.0.0.1`, using `.html` for
   the legacy alias locally. Stop temporary previews afterward.
+
+- QR generation uses pinned Segno from `scripts/qr-requirements.txt` only in tooling.
+  `scripts/generate_qr.py --output /tmp/qr-codes` creates PNG/SVG and links.tsv
+  for `*/pdf/*.pdf`; URLs remain independent of PDF contents. Run tests after
+  installing that requirements file. Keep generated images out of source commits.
+- CI uploads QR downloads as a 90-day artifact without repository write access.
+  Fork runs use their GitHub Pages URL, original runs use CNAME. Never distribute
+  fork preview QR codes as production codes.

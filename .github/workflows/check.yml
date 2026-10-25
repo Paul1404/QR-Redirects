@@ -3,6 +3,7 @@ name: Check static pages
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,5 +15,24 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install QR tooling
+        run: |
+          python3 -m venv "$RUNNER_TEMP/qr-venv"
+          "$RUNNER_TEMP/qr-venv/bin/pip" install -r scripts/qr-requirements.txt
+          echo "$RUNNER_TEMP/qr-venv/bin" >> "$GITHUB_PATH"
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/check.py
+      - name: Generate downloadable QR codes
+        env:
+          QR_BASE_URL: ${{ github.event.repository.fork && format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) || '' }}
+        run: |
+          python3 scripts/generate_qr.py --base-url "$QR_BASE_URL" --output "$RUNNER_TEMP/qr-codes"
+          echo '### QR-Codes herunterladen' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Das Artefakt **qr-codes** enthält PNG und SVG für jede PDF sowie links.tsv mit allen Zieladressen. Vor dem Druck die Zieladresse prüfen und den Code scannen.' >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/qr-codes/links.tsv" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: qr-codes
+          path: ${{ runner.temp }}/qr-codes
+          if-no-files-found: error
+          retention-days: 90

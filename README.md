@@ -4,11 +4,20 @@
 
 1. Die PDF in `01/pdf/` hochladen und speichern. Einen dauerhaften Dateinamen
    ohne Datum oder Versionsnummer wählen, beispielsweise `produkt.pdf`.
-2. Nach der Veröffentlichung die PDF öffnen und ihre vollständige HTTPS-Adresse
-   für den QR-Code verwenden. Beispiel: `https://qr.wue.ch/01/pdf/produkt.pdf`.
-3. Den erzeugten QR-Code scannen und die Anleitung prüfen.
+2. Unter **Actions → Check static pages** den erfolgreichen Lauf öffnen und
+   unten das Artefakt **qr-codes** herunterladen. Es enthält zu jeder PDF einen
+   QR-Code als PNG und SVG sowie `links.tsv` mit den Zieladressen.
+3. Den QR-Code scannen, die Anleitung prüfen und anschließend drucken.
 
-Dafür ist keine HTML-Seite oder Kopiervorlage erforderlich.
+Dafür ist keine HTML-Seite, Kopiervorlage oder externe QR-Code-Website erforderlich.
+Die SVG eignet sich für den Druck in beliebiger Größe. Den weißen Rand erhalten.
+Nach 90 Tagen läuft der Download ab; ein neuer Lauf erzeugt dieselben Codes erneut.
+
+Im Originalrepository verwenden die Codes die Domain aus `CNAME`, aktuell
+`https://qr.wue.ch`. **Im Fork zeigen sie auf dessen GitHub-Pages-Vorschau und sind
+nur zum Testen bestimmt.** Vor dem Druck immer die Zieladresse kontrollieren.
+Der Lauf erstellt die Bilder als Download und schreibt keine Dateien zurück ins
+Repository. Die Website bleibt unverändert statisch.
 
 ## Anleitung aktualisieren
 
@@ -39,11 +48,14 @@ Die Startseite leitet weiterhin zu <https://wue.ch> weiter.
 
 Die automatische Prüfung meldet fehlende lokale Dateien, unpassende
 Weiterleitungslinks und Dateien ohne PDF-Kennung. Sie verändert keine Dateien
-und benötigt keine zusätzlichen Python-Pakete.
+und benötigt keine zusätzlichen Python-Pakete. Nur die QR-Erzeugung verwendet
+das fest versionierte Python-Paket Segno 1.6.6. Die Erzeugung läuft lokal
+im GitHub-Runner, ohne externe API.
 
 Für die lokale Prüfung mit Python 3.9 oder neuer:
 
 ```sh
+python3 -m pip install -r scripts/qr-requirements.txt
 python3 scripts/check.py
 python3 -m unittest discover -s tests -v
 ```
@@ -59,3 +71,11 @@ beenden.
 
 Ein Fork übernimmt die Domain des Originals nicht. Für Vorschauen keine fremde
 Domain konfigurieren.
+
+QR-Codes lokal erzeugen, beispielsweise zum Prüfen der Vorschau:
+
+```sh
+python3 scripts/generate_qr.py --base-url https://paul1404.github.io/QR-Redirects --output /tmp/qr-codes
+```
+
+Ohne `--base-url` wird die Domain aus `CNAME` verwendet.
