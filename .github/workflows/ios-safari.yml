@@ -12,9 +12,14 @@ jobs:
   safari:
     if: github.repository == 'Paul1404/QR-Redirects'
     runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: [legacy, direct]
     timeout-minutes: 20
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      ENTRY_KIND: ${{ matrix.entry }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,7 +39,12 @@ jobs:
           runtime, device = candidates[0]
           with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('SIMULATOR_ID=' + device['udid'] + '\n')
           Path('artifacts/device.txt').write_text(device['name'] + '\n' + runtime + '\n' + device['udid'] + '\n')
-          print(device['name'], runtime)
+          kind = os.environ['ENTRY_KIND']
+          base = 'https://paul1404.github.io/QR-Redirects/01/'
+          url = base + ('hy-alarm?test=' + os.environ['GITHUB_SHA'][:7] if kind == 'legacy' else 'pdf/Kundenanleitung_HY_Alarm.pdf')
+          with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('PREVIEW_URL=' + url + '\n')
+          Path('artifacts/entry.txt').write_text(kind + '\n' + url + '\n')
+          print(device['name'], runtime, kind)
           PY
       - name: Boot iOS and open the live fork preview
         run: |
@@ -42,7 +52,7 @@ jobs:
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl status_bar "$SIMULATOR_ID" override --time '9:41' --batteryState charged --batteryLevel 100
           for attempt in 1 2 3 4 5; do
-            if xcrun simctl openurl "$SIMULATOR_ID" 'https://paul1404.github.io/QR-Redirects/01/hy-alarm?ios=ec4dbcd'; then
+            if xcrun simctl openurl "$SIMULATOR_ID" "$PREVIEW_URL"; then
               exit 0
             fi
             sleep 5
@@ -65,7 +75,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: iphone-safari-results
+          name: iphone-safari-results-${{ matrix.entry }}
           path: |
             artifacts/screenshots/*.png
             artifacts/screenshots/*.txt
