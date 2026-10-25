@@ -12,3 +12,12 @@
 - Preview with `python3 -m http.server 8765 --bind 127.0.0.1`, using `.html` URLs.
   Check desktop and mobile layouts and stop the server afterward. A local check
   does not verify GitHub Pages deployment or real-device PDF support.
+
+## Fork preview
+
+- `Paul1404/QR-Redirects` publishes this fork-only `gh-pages` branch at
+  `https://paul1404.github.io/QR-Redirects/` using branch publishing from `/`.
+- `CNAME` is intentionally absent on this branch. Do not claim the upstream
+  custom domain. Keep this preview-only change out of the upstream proposal.
+- This is a snapshot of the fix branch, not an automatic per-PR deployment.
+  After refreshing it, validate the published manual route and direct PDF link.
