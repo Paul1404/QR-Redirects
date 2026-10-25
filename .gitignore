@@ -9,3 +9,7 @@ Thumbs.db
 # Python validation and tests
 __pycache__/
 *.py[cod]
+
+# Generated iOS UI-test project and results
+tests/ios/SafariPreview.xcodeproj/
+artifacts/
