@@ -48,7 +48,10 @@ In `redirects.json` das Ziel der kurzen Adresse eintragen oder ändern:
 
 Nach erfolgreicher Veröffentlichung führt **derselbe gedruckte Code** zur neuen
 Website. Die kurze Adresse und das QR-Bild ändern sich dabei nicht. Externe Ziele
-müssen HTTPS verwenden. Die Datei kann auch mehrere kurze Adressen zu derselben
+müssen HTTPS verwenden. Nach einem Zielwechsel können Pages und Browser noch
+die vorherige Weiterleitung zwischenspeichern. Das alte Ziel bis zur Kontrolle
+der veröffentlichten Umstellung erreichbar lassen. Die Datei kann auch mehrere
+kurze Adressen zu derselben
 Anleitung enthalten. Lokale Ziele sind Pfade ab dem Repository-Stamm.
 
 Vor dem Umbenennen, Verschieben oder Entfernen einer bereits verteilten PDF die
