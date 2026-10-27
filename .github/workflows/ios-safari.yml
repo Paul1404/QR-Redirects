@@ -2,6 +2,12 @@ name: iPhone Safari preview
 
 on:
   workflow_dispatch:
+    inputs:
+      entry:
+        description: Entry address to exercise
+        type: choice
+        options: [both, legacy, new-short]
+        default: both
 
 permissions:
   contents: read
@@ -13,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        entry: [legacy, new-short]
+        entry: ${{ inputs.entry == 'legacy' && fromJSON('["legacy"]') || inputs.entry == 'new-short' && fromJSON('["new-short"]') || fromJSON('["legacy","new-short"]') }}
     timeout-minutes: 20
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
