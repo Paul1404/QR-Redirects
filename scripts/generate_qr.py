@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 import posixpath
 import re
-import shutil
 import unicodedata
 from urllib.parse import quote, unquote, urlsplit
 
@@ -98,39 +97,18 @@ def redirect_html(route, target):
             f'<p><a href="{href}">Anleitung öffnen</a></p>\n</body>\n</html>\n')
 
 
-def generate(root, output, base_url, site_output=None):
+def generate(root, output, base_url, write_pages=False):
     parts = https_url(base_url)
     if parts.query or parts.fragment:
         raise ValueError('base URL must not contain a query or fragment')
-    for destination in (output, site_output):
-        if destination is not None and destination.resolve().is_relative_to(root.resolve()):
-            raise ValueError('output must be outside the source repository')
+    if output.resolve().is_relative_to(root.resolve()):
+        raise ValueError('QR output must be outside the source repository')
     mapping = routes(root)
-    if site_output is not None:
-        if site_output.exists():
-            raise ValueError('site output must be a new directory')
-        # Publish only website files, never scripts, tests or repository metadata.
-        site_output.mkdir(parents=True)
-        for file in root.rglob('*'):
-            relative = file.relative_to(root)
-            if any(part.startswith('.') for part in relative.parts):
-                continue
-            if relative.parts[0] in ('scripts', 'tests', '00_templates') or not file.is_file():
-                continue
-            if file.suffix.lower() not in ('.html', '.htm', '.pdf', '.png', '.svg', '.css', '.js') and relative.as_posix() != 'CNAME':
-                continue
-            if not file.resolve().is_relative_to(root.resolve()):
-                raise ValueError(f'file points outside repository: {relative}')
-            dest = site_output / relative
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(file, dest)
-        (site_output / '.nojekyll').touch()
-        # A fork preview must never claim the original repository's custom domain.
-        cname = root / 'CNAME'
-        if cname.exists() and parts.hostname != cname.read_text().strip():
-            (site_output / 'CNAME').unlink(missing_ok=True)
+    if write_pages:
         for route, target in mapping.items():
-            page = site_output / (route + '.html')
+            page = root / (route + '.html')
+            if not page.resolve().is_relative_to(root.resolve()):
+                raise ValueError(f'redirect page outside repository: {route}')
             page.parent.mkdir(parents=True, exist_ok=True)
             page.write_text(redirect_html(route, target), encoding='utf-8')
     rows = ['SHORT_URL\tTARGET\tPNG\tSVG']
@@ -150,10 +128,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base-url', default=None)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--site-output', type=Path)
+    parser.add_argument('--write-pages', action='store_true', help='Write short HTML redirects into the repository')
     args = parser.parse_args()
     base = args.base_url or 'https://' + (ROOT / 'CNAME').read_text().strip()
-    print(f'Generated {generate(ROOT, args.output, base, args.site_output)} short addresses: {base}')
+    print(f'Generated {generate(ROOT, args.output, base, args.write_pages)} short addresses: {base}')
 
 
 if __name__ == '__main__':

@@ -4,14 +4,14 @@ on:
   push:
   pull_request:
   workflow_dispatch:
-    inputs:
-      preview:
-        description: Deploy this branch to fork Pages for testing
-        type: boolean
-        default: false
 
 permissions:
-  contents: read
+  contents: write
+  pages: write
+
+concurrency:
+  group: static-pages-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   check:
@@ -19,50 +19,43 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          persist-credentials: false
+          persist-credentials: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
       - name: Install QR tooling
         run: |
           python3 -m venv "$RUNNER_TEMP/qr-venv"
           "$RUNNER_TEMP/qr-venv/bin/pip" install -r scripts/qr-requirements.txt
           echo "$RUNNER_TEMP/qr-venv/bin" >> "$GITHUB_PATH"
       - run: python3 -m unittest discover -s tests -v
-      - run: python3 scripts/check.py
-      - name: Generate downloadable QR codes
+      - name: Generate short redirects and QR codes
         env:
           QR_BASE_URL: ${{ github.event.repository.fork && format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) || '' }}
         run: |
-          python3 scripts/generate_qr.py --base-url "$QR_BASE_URL" --output "$RUNNER_TEMP/qr-codes" --site-output "$RUNNER_TEMP/site"
-          python3 scripts/check.py --root "$RUNNER_TEMP/site"
+          python3 scripts/generate_qr.py --base-url "$QR_BASE_URL" --output "$RUNNER_TEMP/qr-codes" --write-pages
+          python3 scripts/check.py
           echo '### QR-Codes herunterladen' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Das Artefakt **qr-codes** enthält PNG und SVG für jede kurze Adresse sowie links.tsv mit kurzen Adressen und Weiterleitungszielen. Vor dem Druck die Zieladresse prüfen und den Code scannen.' >> "$GITHUB_STEP_SUMMARY"
-          cat "$RUNNER_TEMP/qr-codes/links.tsv" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Das Artefakt **qr-codes** enthält PNG und SVG. links.tsv nennt die kurzen Adressen und Ziele. Nach Veröffentlichung scannen und vor dem Druck prüfen.' >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: qr-codes
           path: ${{ runner.temp }}/qr-codes
           if-no-files-found: error
           retention-days: 90
-      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
-        with:
-          path: ${{ runner.temp }}/site
-
-  deploy:
-    needs: check
-    if: >-
-      github.event_name != 'pull_request' &&
-      (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ||
-       (github.event.repository.fork && github.event_name == 'workflow_dispatch' && inputs.preview))
-    permissions:
-      pages: write
-      id-token: write
-    runs-on: ubuntu-latest
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Publish checked redirects and manuals
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+      - name: Save generated HTML on main
+        id: redirects
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: |
+          git add -- '*.html'
+          if git diff --cached --quiet; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'Update short redirects for uploaded manuals'
+            git push origin HEAD:main
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Ask existing Pages to publish the generated HTML
+        if: steps.redirects.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" --silent

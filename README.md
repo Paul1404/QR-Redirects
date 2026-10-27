@@ -1,43 +1,34 @@
 # Produktanleitungen per QR-Code
 
-## Neue Anleitung veröffentlichen
+## Neue Anleitung
 
-1. Die PDF in `01/pdf/` hochladen und speichern, beispielsweise
-   `Kundenanleitung_Produkt1.pdf`.
-2. GitHub erzeugt automatisch die kurze Adresse **`https://qr.wue.ch/01/produkt1`**,
-   die zugehörige HTML-Weiterleitung und den passenden QR-Code als PNG und SVG.
+1. PDF in `01/pdf/` hochladen, zum Beispiel `Kundenanleitung_Produkt1.pdf`.
+2. Die CI erzeugt automatisch `01/produkt1.html` und den QR-Code für
+   **`https://qr.wue.ch/01/produkt1`**. Die HTML-Datei wird auf `main` gespeichert.
+   GitHub Pages veröffentlicht weiterhin wie bisher aus diesem Branch.
 3. Unter **Actions → Check static pages → erfolgreicher Lauf → Artifacts → qr-codes**
-   die Bilder herunterladen. Nach der Veröffentlichung scannen, die Anleitung
-   kontrollieren und erst dann drucken. Den weißen Rand um den QR-Code erhalten.
+   PNG und SVG herunterladen. Nach der Pages-Veröffentlichung scannen und prüfen,
+   dann drucken. Den weißen Rand um den QR-Code erhalten.
 
-Die kurze Adresse bleibt auf dem Gerät. Dahinter kann heute die PDF liegen und
-später eine Anleitung auf der neuen Website. Eine HTML-Kopiervorlage muss nicht
-mehr bearbeitet werden. Es gibt keinen eingebetteten PDF-Viewer.
+Die kurze Adresse bleibt auf dem Gerät. Dahinter liegt zunächst die PDF und
+später bei Bedarf die Anleitung auf der Firmenwebsite. Eine HTML-Vorlage muss
+nicht mehr kopiert werden. Die PDF wird nicht eingebettet, sondern direkt im
+Browser geöffnet.
 
-Die kurze Adresse entsteht aus Produktordner und Dateiname: Der Anfang
-`Kundenanleitung_` entfällt, Buchstaben werden klein geschrieben, Umlaute als
-`ae`, `oe`, `ue` ausgeschrieben und Leerzeichen durch Bindestriche ersetzt.
-`01/pdf/Kundenanleitung_Produkt1.pdf` ergibt damit `01/produkt1`.
-Doppelte kurze Adressen brechen die Prüfung ab und müssen durch unterschiedliche
-Dateinamen vermieden werden.
+Für die kurze Adresse entfällt der Dateianfang `Kundenanleitung_`. Buchstaben
+werden klein geschrieben, Umlaute als `ae`, `oe`, `ue` ausgeschrieben und
+Leerzeichen durch Bindestriche ersetzt. Doppelte kurze Adressen melden einen Fehler.
 
-Im Fork zeigen erzeugte Codes auf dessen GitHub-Pages-Vorschau. **Diese Codes
-sind nur zum Testen bestimmt.** Im Original verwenden sie die Domain aus `CNAME`,
-aktuell `qr.wue.ch`. Die Datei `links.tsv` im Download nennt jede kurze Adresse
-und ihr Weiterleitungsziel. Downloads sind 90 Tage verfügbar und lassen sich mit
-einem neuen Lauf erneut erzeugen.
+Im Fork zeigen QR-Downloads auf dessen Vorschau und sind nur zum Testen bestimmt.
+`links.tsv` im Download nennt kurze Adressen und Ziele. Downloads sind 90 Tage
+verfügbar und lassen sich durch einen neuen Lauf erneut erzeugen.
 
-## Anleitung aktualisieren
+## Anleitung aktualisieren oder später umziehen
 
-Die PDF unter **demselben Namen im selben Ordner ersetzen**. Die kurze Adresse
-und der QR-Code bleiben gleich. Keine HTML-Datei anpassen.
+Eine neue PDF-Fassung **unter demselben Namen im selben Ordner ersetzen**.
+Die kurze Adresse und der gedruckte QR-Code bleiben gleich.
 
-GitHub Pages und Browser können kurz noch eine vorherige Fassung anzeigen.
-Nach der Veröffentlichung die neue Fassung kontrollieren.
-
-## Später auf die neue Website umstellen
-
-In `redirects.json` das Ziel der kurzen Adresse eintragen oder ändern:
+Für den späteren Website-Umzug das Ziel in `redirects.json` ändern:
 
 ```json
 {
@@ -46,48 +37,44 @@ In `redirects.json` das Ziel der kurzen Adresse eintragen oder ändern:
 }
 ```
 
-Nach erfolgreicher Veröffentlichung führt **derselbe gedruckte Code** zur neuen
-Website. Die kurze Adresse und das QR-Bild ändern sich dabei nicht. Externe Ziele
-müssen HTTPS verwenden. Nach einem Zielwechsel können Pages und Browser noch
-die vorherige Weiterleitung zwischenspeichern. Das alte Ziel bis zur Kontrolle
-der veröffentlichten Umstellung erreichbar lassen. Die Datei kann auch mehrere
-kurze Adressen zu derselben
-Anleitung enthalten. Lokale Ziele sind Pfade ab dem Repository-Stamm.
+Die CI aktualisiert die HTML-Weiterleitung. **Der gedruckte Code bleibt identisch.**
+Externe Ziele müssen HTTPS verwenden. Lokale Ziele sind Pfade ab dem Repository-Stamm.
+Ziele in dieser Datei pflegen; automatisch erzeugte HTML-Dateien werden beim
+nächsten Lauf daraus aktualisiert.
 
 Vor dem Umbenennen, Verschieben oder Entfernen einer bereits verteilten PDF die
-bisherige kurze Adresse ausdrücklich in `redirects.json` festhalten und auf das
-neue Ziel setzen. Sonst entfällt die automatisch abgeleitete Adresse beim nächsten
-Veröffentlichen. Bereits gedruckte kurze Adressen niemals löschen oder für ein
-anderes Produkt wiederverwenden.
+bisherige kurze Adresse mit ihrem neuen Ziel in `redirects.json` festhalten.
+Gedruckte Adressen nicht löschen oder für ein anderes Produkt wiederverwenden.
+
+Pages und Browser können kurz noch alte PDF-Fassungen oder Weiterleitungsziele
+zwischenspeichern. Beim Umzug das alte Ziel bis zur Kontrolle erreichbar lassen.
 
 ## Bereits gedruckter HY-Alarm-Code
 
-Die Bilddatei `01/qr_01_HY-Alarm.png` bleibt bytegenau unverändert. Ihr Inhalt ist
-`http://qr.wue.ch/01/hy-alarm`. Die bestehende HTTP-zu-HTTPS-Weiterleitung bleibt
-bestehen. Anschließend öffnet die kurze Adresse die PDF im Browser.
+`01/qr_01_HY-Alarm.png` bleibt unverändert. Der Inhalt ist
+`http://qr.wue.ch/01/hy-alarm`. Die bestehende HTTPS-Weiterleitung sowie
+`01/hy-alarm` und `01/hy-alarm.html` bleiben erhalten. Dahinter öffnet sich die
+PDF im Browser. Ein zusätzlicher Link erlaubt das manuelle Öffnen.
+Domain, Original-PDF und PDF-Pfad werden nicht geändert.
 
-`01/hy-alarm` und `01/hy-alarm.html` bleiben erhalten. Die Weiterleitung besitzt
-zusätzlich einen anklickbaren Link. Domain, PDF-Datei und PDF-Pfad bleiben im PR
-unverändert. Die neu erzeugten Downloads werden separat bereitgestellt und
-überschreiben das alte QR-Bild nicht.
+## Bestehende Veröffentlichung bleibt bestehen
 
-## Einmalige Einrichtung beim Übernehmen des PR
+**Keine Änderung der Pages-Einstellungen erforderlich.** Quelle bleibt `main`,
+Domain bleibt `qr.wue.ch`. Es gibt keinen zusätzlichen Deployment-Workflow.
 
-Unter **Settings → Pages → Build and deployment → Source** die Quelle
-**GitHub Actions** auswählen. Die bestehende Domain `qr.wue.ch` und die
-HTTPS-Einstellung beibehalten. Anschließend den Workflow auf `main` ausführen.
-Die Umstellung betrifft die Veröffentlichung, nicht Domain oder QR-Adressen.
+Die CI prüft die Dateien und erzeugt Weiterleitungen und QR-Downloads.
+Auf `main` speichert der Bot geänderte HTML-Dateien mit einem normalen Commit.
+Danach fordert die CI einen Build der bestehenden Pages an, weil Bot-Commits
+allein diesen Build nicht auslösen. Ohne geänderte HTML-Dateien ist kein
+zusätzlicher Commit nötig. Pull Requests prüfen und erzeugen Downloads, schreiben
+aber keine Dateien zurück. Es wird niemals mit Force-Push gearbeitet.
 
-Danach ist der Ablauf automatisch: Änderung speichern, prüfen, Weiterleitungen
-und QR-Bilder erzeugen, erzeugte Website prüfen und veröffentlichen.
-Ein fehlgeschlagener Prüflauf veröffentlicht keine neue Website.
-Pull Requests erzeugen nur Prüfergebnisse und Downloads, keine Veröffentlichung.
-Der bisherige Stand bleibt bis zu einer erfolgreichen Veröffentlichung verfügbar.
+Dafür verwendet der Workflow das vorhandene GitHub-Token mit `contents: write`
+und `pages: write`. Ein eigener Token, OIDC oder ein Deployment-Environment sind
+nicht erforderlich. Die bisherige branchbasierte Veröffentlichung bleibt
+bestehen und wird nicht zu einer Veröffentlichungssperre hinter den Tests umgebaut.
 
-Die Website bleibt statisch. Im Quellrepository entstehen keine automatischen
-Commits. Nur der Veröffentlichungsjob erhält `pages: write` und `id-token: write`;
-Prüfung und QR-Erzeugung haben keinen Schreibzugriff auf das Repository.
-Segno 1.6.6 ist das einzige gezielt hinzugefügte QR-Paket, ohne externe QR-API.
+Segno 1.6.6 erzeugt die QR-Bilder ohne externe QR-API. Die Website bleibt statisch.
 Die Startseite leitet weiterhin zu `https://wue.ch` weiter.
 
 ## Lokal prüfen
@@ -97,19 +84,16 @@ Python 3.9 oder neuer:
 ```sh
 python3 -m pip install -r scripts/qr-requirements.txt
 python3 -m unittest discover -s tests -v
+python3 scripts/generate_qr.py --output /tmp/qr-codes --write-pages
 python3 scripts/check.py
-python3 scripts/generate_qr.py --output /tmp/qr-codes --site-output /tmp/qr-site
-python3 scripts/check.py --root /tmp/qr-site
 ```
 
-Das Website-Ausgabeverzeichnis muss neu sein und außerhalb des Quellrepositorys
-liegen. Für eine Vorschau kann mit `--base-url` eine andere HTTPS-Basisadresse
-angegeben werden. Im Fork wird keine fremde Domain veröffentlicht.
+`--write-pages` schreibt die HTML-Weiterleitungen ins Repository. Ohne diese
+Option entstehen nur die QR-Downloads. `--base-url` erlaubt eine andere
+HTTPS-Basisadresse für eine Vorschau. Der QR-Ausgabeordner muss außerhalb des
+Repositorys liegen. Für eine branchbasierte Fork-Vorschau keine fremde CNAME übernehmen.
 
-`python3 -m http.server 8765 --bind 127.0.0.1 --directory /tmp/qr-site` startet eine
-lokale Vorschau. Dort `01/produkt1.html` verwenden, da der einfache Server keine
-endungslosen HTML-Adressen auflöst. Anschließend mit Strg+C beenden.
-
-Die statische Prüfung erkennt unter anderem fehlende lokale Ziele, unpassende
-Weiterleitungslinks, Pfade außerhalb des Repositorys und Dateien ohne PDF-Kennung.
-Das ist keine vollständige Prüfung des PDF-Inhalts.
+`python3 -m http.server 8765 --bind 127.0.0.1` startet eine lokale Vorschau.
+Dort `.html` an die kurze Adresse anhängen; anschließend mit Strg+C beenden.
+Die Prüfung erkennt fehlende lokale Ziele, unpassende Links und PDF-Kennungen,
+prüft aber nicht den vollständigen Inhalt der PDF.

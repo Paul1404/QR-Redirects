@@ -18,7 +18,7 @@ class QRPublishing(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / 'source'
         self.output = Path(self.temp.name) / 'download'
-        self.site = Path(self.temp.name) / 'published'
+        self.site = self.root
         self.manual = self.root / '01/pdf/Kundenanleitung_Produkt1.pdf'
         self.manual.parent.mkdir(parents=True)
         self.manual.write_bytes(b'%PDF-1.4\nfirst version')
@@ -32,7 +32,7 @@ class QRPublishing(unittest.TestCase):
                 if p.suffix in ('.png', '.svg')}
 
     def test_upload_generates_short_redirect_and_both_qr_formats(self):
-        self.assertEqual(qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site), 1)
+        self.assertEqual(qr.generate(self.root, self.output, 'https://qr.wue.ch', write_pages=True), 1)
         manifest = (self.output / 'links.tsv').read_text()
         self.assertIn('https://qr.wue.ch/01/produkt1\t', manifest)
         self.assertIn('01/pdf/Kundenanleitung_Produkt1.pdf', manifest)
@@ -43,22 +43,22 @@ class QRPublishing(unittest.TestCase):
         self.assertTrue((self.output / '01/produkt1.png').read_bytes().startswith(b'\x89PNG'))
         self.assertIn('<svg', (self.output / '01/produkt1.svg').read_text())
         self.assertEqual(self.manual.read_bytes(), (self.site / '01/pdf/Kundenanleitung_Produkt1.pdf').read_bytes())
-        self.assertFalse((self.root / '01/produkt1.html').exists())
+        self.assertTrue((self.root / '01/produkt1.html').exists())
 
     def test_unicode_and_spaces_get_safe_short_name_and_encoded_target(self):
         self.manual.rename(self.manual.with_name('Kundenanleitung_Küche #1.pdf'))
-        qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site)
+        qr.generate(self.root, self.output, 'https://qr.wue.ch', write_pages=True)
         html = (self.site / '01/kueche-1.html').read_text()
         self.assertIn('pdf/Kundenanleitung_K%C3%BCche%20%231.pdf', html)
 
-    def test_preview_uses_project_prefix_and_does_not_claim_custom_domain(self):
-        qr.generate(self.root, self.output, 'https://paul1404.github.io/QR-Redirects/', self.site)
+    def test_preview_uses_project_prefix_without_changing_source_domain(self):
+        qr.generate(self.root, self.output, 'https://paul1404.github.io/QR-Redirects/', write_pages=True)
         self.assertIn('https://paul1404.github.io/QR-Redirects/01/produkt1', (self.output / 'links.tsv').read_text())
-        self.assertFalse((self.site / 'CNAME').exists())
+        self.assertEqual((self.root / 'CNAME').read_text(), 'qr.wue.ch')
         self.assertIn('url=pdf/', (self.site / '01/produkt1.html').read_text())
 
     def test_production_keeps_custom_domain(self):
-        qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site)
+        qr.generate(self.root, self.output, 'https://qr.wue.ch', write_pages=True)
         self.assertEqual((self.site / 'CNAME').read_text(), 'qr.wue.ch')
 
     def test_replacing_pdf_keeps_qr_identical(self):
@@ -72,7 +72,7 @@ class QRPublishing(unittest.TestCase):
         qr.generate(self.root, self.output, 'https://qr.wue.ch')
         before = self.images()
         self.mapping({'01/produkt1': 'https://wue.ch/anleitungen/produkt1?lang=de&v=2'})
-        qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site)
+        qr.generate(self.root, self.output, 'https://qr.wue.ch', write_pages=True)
         self.assertEqual(before, self.images())
         html = (self.site / '01/produkt1.html').read_text()
         self.assertIn('https://wue.ch/anleitungen/produkt1?lang=de&amp;v=2', html)
@@ -81,13 +81,13 @@ class QRPublishing(unittest.TestCase):
     def test_explicit_alias_survives_removing_migrated_pdf(self):
         self.mapping({'01/produkt1': 'https://wue.ch/anleitungen/produkt1'})
         self.manual.unlink()
-        qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site)
+        qr.generate(self.root, self.output, 'https://qr.wue.ch', write_pages=True)
         self.assertTrue((self.site / '01/produkt1.html').is_file())
 
     def test_explicit_old_short_name_can_point_to_a_renamed_pdf(self):
         self.manual.rename(self.manual.with_name('neuer-name.pdf'))
         self.mapping({'01/produkt1': '01/pdf/neuer-name.pdf'})
-        qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site)
+        qr.generate(self.root, self.output, 'https://qr.wue.ch', write_pages=True)
         self.assertIn('url=pdf/neuer-name.pdf', (self.site / '01/produkt1.html').read_text())
 
     def test_same_filename_in_different_product_folders_does_not_collide(self):
@@ -131,19 +131,14 @@ class QRPublishing(unittest.TestCase):
     def test_source_tree_is_not_an_output_directory(self):
         with self.assertRaisesRegex(ValueError, 'outside the source'):
             qr.generate(self.root, self.root / 'downloads', 'https://qr.wue.ch')
-        with self.assertRaisesRegex(ValueError, 'outside the source'):
-            qr.generate(self.root, self.output, 'https://qr.wue.ch', self.root / 'site')
 
-    def test_build_does_not_publish_tooling_or_change_source_files(self):
-        (self.root / 'scripts').mkdir()
-        (self.root / 'scripts/private.html').write_text('tooling')
+    def test_qr_only_mode_does_not_change_source_files(self):
         before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
-        qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site)
-        self.assertFalse((self.site / 'scripts').exists())
+        qr.generate(self.root, self.output, 'https://qr.wue.ch')
         self.assertEqual(before, {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
 
-    def test_built_site_passes_static_checker(self):
-        qr.generate(self.root, self.output, 'https://qr.wue.ch', self.site)
+    def test_generated_pages_pass_static_checker(self):
+        qr.generate(self.root, self.output, 'https://qr.wue.ch', write_pages=True)
         checker = Path(__file__).resolve().parents[1] / 'scripts/check.py'
         result = subprocess.run([sys.executable, str(checker), '--root', str(self.site)], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
