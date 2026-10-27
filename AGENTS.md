@@ -1,27 +1,33 @@
 # Repository guidance
 
-- Keep this a static PDF hosting site. New manuals need only a PDF upload and a
-  QR code pointing directly to its permanent HTTPS address. Do not add a build,
-  framework, embedded viewer, asset hashing, or per-document HTML generation.
-- Updates replace the PDF at the same path. No version query or update command
-  is required. Browser and GitHub Pages caches can briefly retain an older file.
-- Preserve published PDF paths, `CNAME`, and the existing printed QR address
-  `/01/hy-alarm`. Its small HTML redirect must continue to point to
-  `pdf/Kundenanleitung_HY_Alarm.pdf` with a visible matching link.
-- Preserve `01/qr_01_HY-Alarm.png` byte-for-byte: it encodes the already printed
-  `http://qr.wue.ch/01/hy-alarm`. Generated downloads are separate artifacts.
-- New QR images should encode the PDF URL, not an intermediary or QR-provider URL.
-- The Python 3.9+ standard-library checker is read-only. Run
-  `python3 scripts/check.py` and `python3 -m unittest discover -s tests -v`.
-- iOS Safari crops embedded PDFs in this layout. Direct PDF navigation uses the
-  browser's native reader; verify opening, zoom and scrolling when changing routing.
-- Preview with `python3 -m http.server 8765 --bind 127.0.0.1`, using `.html` for
-  the legacy alias locally. Stop temporary previews afterward.
-
-- QR generation uses pinned Segno from `scripts/qr-requirements.txt` only in tooling.
-  `scripts/generate_qr.py --output /tmp/qr-codes` creates PNG/SVG and links.tsv
-  for `*/pdf/*.pdf`; URLs remain independent of PDF contents. Run tests after
-  installing that requirements file. Keep generated images out of source commits.
-- CI uploads QR downloads as a 90-day artifact without repository write access.
-  Fork runs use their GitHub Pages URL, original runs use CNAME. Never distribute
-  fork preview QR codes as production codes.
+- Keep this a static GitHub Pages site without an embedded PDF viewer, framework,
+  server or database. The generated site is the deployment artifact, not source commits.
+- Printed QR codes must use permanent short addresses such as `/01/produkt1`,
+  never PDF filenames or a QR-provider URL. The short page opens the PDF directly
+  in the browser reader. An HTTPS website target can later replace the PDF target.
+- `scripts/generate_qr.py` derives short addresses from `*/pdf/*.pdf` (remove
+  Kundenanleitung prefix, normalize spelling) and applies `redirects.json` overrides.
+  It produces HTML redirects with matching fallback links, PNG/SVG QR downloads,
+  and links.tsv. Colliding names fail instead of reassigning an address.
+- Preserve existing short addresses when renaming/removing PDFs by recording their
+  new target in redirects.json first. Never repurpose a printed address for another product.
+- Preserve CNAME, the original HY-Alarm PDF and its path, `/01/hy-alarm` and
+  `/01/hy-alarm.html`. The JSON mapping pins this route explicitly.
+  Keep `01/qr_01_HY-Alarm.png` byte-for-byte: it encodes the printed
+  `http://qr.wue.ch/01/hy-alarm`. Generated downloads must not replace this file.
+- PDF updates replace the same filename. No hash/version parameters are required;
+  Pages/browser caches can briefly retain an older file. Inspect after publication.
+- QR tooling uses pinned Segno from scripts/qr-requirements.txt. Validation uses
+  Python 3.9+ standard library. Run unit tests, source check, build, built-site check.
+- `python3 scripts/generate_qr.py --output /tmp/qr-codes --site-output /tmp/qr-site`
+  requires a new site output directory outside source. `--base-url` supports previews.
+- GitHub Pages must use Source GitHub Actions. CI checks and builds before deployment;
+  only default-branch pushes/manual runs deploy. Fork manual runs can explicitly
+  enable the preview input. Pull requests never deploy. Repository write access is
+  unnecessary. Pages and OIDC permissions belong only to the deployment job.
+- Fork builds use their project Pages prefix and omit the original CNAME. Production
+  retains the existing domain. Fork QR downloads are test codes, not production labels.
+- Local server previews need `.html` URLs because Python's HTTP server does not
+  resolve extensionless Pages routes. Use an isolated port and stop afterward.
+- Routing changes need browser navigation checks including zoom, page 12 and rotation
+  on iOS Safari. Existing simulator harnesses are fork-only test branches.
