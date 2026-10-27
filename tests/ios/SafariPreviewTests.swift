@@ -29,7 +29,10 @@ final class SafariPreviewTests: XCTestCase {
             let welcome = safari.buttons["Continue"]
             if welcome.waitForExistence(timeout: 2) { welcome.tap() }
         }
-        // CI opens either the direct PDF or the existing printed QR address.
+        // Open via Safari UI after launch rather than racing simctl during cold boot.
+        let entry = address()
+        entry.tap()
+        entry.typeText("PREVIEW_ENTRY_URL\n")
         let title = safari.staticTexts["HY-ALARM"].firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 60), "The PDF did not open automatically")
         let field = address()

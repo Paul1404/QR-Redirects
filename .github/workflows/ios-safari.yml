@@ -46,6 +46,7 @@ jobs:
           base = 'https://paul1404.github.io/QR-Redirects/01/'
           url = base + ('hy-alarm?test=' + os.environ['GITHUB_SHA'][:7] if kind == 'legacy' else 'produkt1?test=' + os.environ['GITHUB_SHA'][:7])
           with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('PREVIEW_URL=' + url + '\n')
+          test.write_text(test.read_text().replace('PREVIEW_ENTRY_URL', url))
           Path('artifacts/entry.txt').write_text(kind + '\n' + url + '\n')
           print(device['name'], runtime, kind)
           PY
@@ -54,13 +55,6 @@ jobs:
           xcrun simctl boot "$SIMULATOR_ID"
           xcrun simctl bootstatus "$SIMULATOR_ID" -b
           xcrun simctl status_bar "$SIMULATOR_ID" override --time '9:41' --batteryState charged --batteryLevel 100
-          for attempt in 1 2 3 4 5; do
-            if xcrun simctl openurl "$SIMULATOR_ID" "$PREVIEW_URL"; then
-              exit 0
-            fi
-            sleep 5
-          done
-          exit 1
       - name: Run native Safari UI tests
         run: |
           set -o pipefail
