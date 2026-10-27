@@ -35,7 +35,7 @@ final class SafariPreviewTests: XCTestCase {
         let field = address()
         field.tap()
         let url = field.value as? String ?? ""
-        XCTAssertTrue(url.contains("/01/pdf/Kundenanleitung_HY_Alarm.pdf") || url.contains("/01/pdf/Kundenanleitung_Produkt1.pdf"), "Unexpected document address: \(url)")
+        XCTAssertTrue(url.contains("/01/pdf/EXPECTED_PDF_NAME"), "Unexpected document address: \(url)")
         XCTAssertFalse(url.contains("v="), "Manual access should not require a version parameter")
         field.typeText("\n")
         XCTAssertTrue(title.waitForExistence(timeout: 30))

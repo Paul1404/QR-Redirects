@@ -40,6 +40,9 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('SIMULATOR_ID=' + device['udid'] + '\n')
           Path('artifacts/device.txt').write_text(device['name'] + '\n' + runtime + '\n' + device['udid'] + '\n')
           kind = os.environ['ENTRY_KIND']
+          test = Path('tests/ios/SafariPreviewTests.swift')
+          expected = 'Kundenanleitung_HY_Alarm.pdf' if kind == 'legacy' else 'Kundenanleitung_Produkt1.pdf'
+          test.write_text(test.read_text().replace('EXPECTED_PDF_NAME', expected))
           base = 'https://paul1404.github.io/QR-Redirects/01/'
           url = base + ('hy-alarm?test=' + os.environ['GITHUB_SHA'][:7] if kind == 'legacy' else 'produkt1?test=' + os.environ['GITHUB_SHA'][:7])
           with open(os.environ['GITHUB_ENV'], 'a') as f: f.write('PREVIEW_URL=' + url + '\n')
