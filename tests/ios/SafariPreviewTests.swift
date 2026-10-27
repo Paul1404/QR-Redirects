@@ -35,8 +35,11 @@ final class SafariPreviewTests: XCTestCase {
         entry.typeText("PREVIEW_ENTRY_URL\n")
         let title = safari.staticTexts["HY-ALARM"].firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 60), "The PDF did not open automatically")
-        let field = address()
-        field.tap()
+        // PDF reading collapses Safari's address field into a non-hittable AX item.
+        // On this fixed iPhone 16 portrait layout, open the visible bottom omnibar.
+        safari.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.935)).tap()
+        let field = safari.textFields["URL"].firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Full address field did not open")
         let url = field.value as? String ?? ""
         XCTAssertTrue(url.contains("/01/pdf/EXPECTED_PDF_NAME"), "Unexpected document address: \(url)")
         XCTAssertFalse(url.contains("v="), "Manual access should not require a version parameter")
