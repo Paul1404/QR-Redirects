@@ -36,9 +36,14 @@ Die bestehende Adresse <https://qr.wue.ch/01/hy-alarm> bleibt erhalten.
 <https://qr.wue.ch/01/pdf/Kundenanleitung_HY_Alarm.pdf>
 
 Diese kleine Weiterleitung wird beim Austausch der PDF nicht angepasst.
-Der gespeicherte QR-Code `01/qr_01_HY-Alarm.png` zeigt für neue Ausdrucke direkt
-auf die PDF. Alte HTTP-Codes funktionieren weiterhin über die bestehende
-HTTPS-Weiterleitung.
+Auch die vorhandene Bilddatei `01/qr_01_HY-Alarm.png` bleibt unverändert.
+Sie enthält `http://qr.wue.ch/01/hy-alarm`. GitHub Pages leitet diese Adresse
+bereits auf HTTPS um; die bestehende HTML-Adresse öffnet anschließend die PDF.
+Gedruckte Codes müssen nicht ausgetauscht werden.
+
+Die automatisch erzeugten QR-Downloads sind davon unabhängig und zeigen für
+neue Ausdrucke direkt auf die PDF. Beim Aktualisieren weder die alte
+HTML-Adresse noch den PDF-Pfad umbenennen oder entfernen.
 
 ## Betrieb und Prüfung
 

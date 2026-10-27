@@ -8,6 +8,8 @@
 - Preserve published PDF paths, `CNAME`, and the existing printed QR address
   `/01/hy-alarm`. Its small HTML redirect must continue to point to
   `pdf/Kundenanleitung_HY_Alarm.pdf` with a visible matching link.
+- Preserve `01/qr_01_HY-Alarm.png` byte-for-byte: it encodes the already printed
+  `http://qr.wue.ch/01/hy-alarm`. Generated downloads are separate artifacts.
 - New QR images should encode the PDF URL, not an intermediary or QR-provider URL.
 - The Python 3.9+ standard-library checker is read-only. Run
   `python3 scripts/check.py` and `python3 -m unittest discover -s tests -v`.
