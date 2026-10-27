@@ -1,8 +1,6 @@
 name: iPhone Safari preview
 
 on:
-  push:
-    branches: [test/short-url-publishing]
   workflow_dispatch:
 
 permissions:
