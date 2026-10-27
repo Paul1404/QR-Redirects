@@ -1,26 +1,30 @@
 # Repository guidance
 
-- Keep this a static PDF hosting site. New manuals need only a PDF upload and a
-  QR code pointing directly to its permanent HTTPS address. Do not add a build,
-  framework, embedded viewer, asset hashing, or per-document HTML generation.
-- Updates replace the PDF at the same path. No version query or update command
-  is required. Browser and GitHub Pages caches can briefly retain an older file.
-- Preserve published PDF paths, `CNAME`, and the existing printed QR address
-  `/01/hy-alarm`. Its small HTML redirect must continue to point to
-  `pdf/Kundenanleitung_HY_Alarm.pdf` with a visible matching link.
-- New QR images should encode the PDF URL, not an intermediary or QR-provider URL.
-- The Python 3.9+ standard-library checker is read-only. Run
-  `python3 scripts/check.py` and `python3 -m unittest discover -s tests -v`.
-- iOS Safari crops embedded PDFs in this layout. Direct PDF navigation uses the
-  browser's native reader; verify opening, zoom and scrolling when changing routing.
-- Preview with `python3 -m http.server 8765 --bind 127.0.0.1`, using `.html` for
-  the legacy alias locally. Stop temporary previews afterward.
-
-## Fork preview
-
-- `Paul1404/QR-Redirects` publishes this fork-only `gh-pages` branch at
-  `https://paul1404.github.io/QR-Redirects/` using branch publishing from `/`.
-- `CNAME` is intentionally absent on this branch. Do not claim the upstream
-  custom domain. Keep this preview-only change out of the upstream proposal.
-- This is a snapshot of the fix branch, not an automatic per-PR deployment.
-  After refreshing it, validate the published manual route and direct PDF link.
+- Keep the existing static GitHub Pages publication from main. Do not introduce
+  a separate site export, Pages artifact deployment, OIDC or a Pages source change.
+- Printed QR codes use permanent short addresses, not PDF filenames. The short
+  HTML page opens the PDF in the browser reader without embedding it.
+- scripts/generate_qr.py derives short addresses from */pdf/*.pdf and applies
+  redirects.json overrides. --write-pages writes those HTML files into source;
+  QR PNG/SVG and links.tsv go to an output directory outside the repository.
+- CI tests, generates and checks. On main only, it commits changed generated HTML
+  and requests the existing Pages build via POST /repos/{owner}/{repo}/pages/builds.
+  A GITHUB_TOKEN commit alone does not trigger branch-based Pages publishing.
+  Pull requests never push. No force pushes. No custom token is needed.
+- contents: write and pages: write support that existing branch-based flow.
+  The workflow is not a new deployment gate for other main changes.
+- Preserve published short addresses. Before removing or renaming a PDF, pin the
+  old short address to its new PDF or HTTPS website target in redirects.json.
+  Generated pages are not automatically deleted. Never reuse printed addresses.
+- Preserve CNAME, the original HY-Alarm PDF/path, /01/hy-alarm and its .html form.
+  Preserve 01/qr_01_HY-Alarm.png byte-for-byte; it contains the printed HTTP URL.
+  QR downloads are separate files and must not overwrite that artwork.
+- PDF updates retain their filename. Pages/browser caches can retain old content
+  or destinations briefly. Keep old destinations reachable through migration checks.
+- QR tooling uses pinned Segno. Run unit tests, generate with --write-pages, then
+  run scripts/check.py. No framework, server, database or external QR API.
+- Fork QR downloads use the project Pages URL. Fork publishing branches must not
+  contain another repository's CNAME. Source CNAME is never rewritten by the tool.
+- Local Python HTTP previews need .html URLs. Use an isolated port and stop afterward.
+- iOS simulator harnesses remain on fork-only test branches. Do not add them to
+  this PR or rerun them for changes limited to publishing and documentation.

@@ -41,7 +41,10 @@ class Page(HTMLParser):
 
 
 def main():
-    argparse.ArgumentParser(description=__doc__).parse_args()
+    global ROOT
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--root', type=Path, default=ROOT)
+    ROOT = parser.parse_args().root.resolve()
     errors, pages, pdfs = [], 0, 0
     for path in sorted(ROOT.rglob('*')):
         relative = path.relative_to(ROOT)

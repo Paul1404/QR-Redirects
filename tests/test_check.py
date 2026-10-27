@@ -1,4 +1,5 @@
 """Protect PDF-only publishing and the addresses already printed on QR codes."""
+import hashlib
 from html.parser import HTMLParser
 from pathlib import Path
 import shutil
@@ -85,6 +86,11 @@ class PublishingChecks(unittest.TestCase):
 
 
 class PrintedQRContract(unittest.TestCase):
+    def test_original_printed_qr_image_is_preserved(self):
+        # Existing artwork encodes http://qr.wue.ch/01/hy-alarm.
+        image = (ROOT / '01/qr_01_HY-Alarm.png').read_bytes()
+        self.assertEqual(hashlib.sha256(image).hexdigest(), '5d3ff2dbcd9c8cbadde6098e593ce55c23e380e47e2a24e2491a1e095a17ab45')
+
     def test_hy_alarm_keeps_its_existing_address_and_pdf(self):
         class Redirect(HTMLParser):
             target = None
