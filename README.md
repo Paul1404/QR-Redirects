@@ -1,32 +1,16 @@
-# QR Redirect
+# QR-Redirects
 
-Verwaltung von Kurzlinks für QR-Codes
+Dieses Repository enthält kurze Adressen für QR-Codes auf Produktanleitungen. Die Seiten unter `01/` öffnen die zugehörigen PDFs oder leiten auf eine andere Anleitung weiter. Die veröffentlichte Adresse ist in `CNAME` hinterlegt.
 
-## Konzept
-Anleitungen können Mittels QR Code als pdf geöffnet werden, damit wir sicherstellen können, dass dieser immer gültig ist, verwalten wir diesen unter qr.wue.ch.
+## Anleitung hinzufügen
 
-qr.wue.ch ist auf unser git repo redirected (public)
-01/hy-alarm ist eine html Seite auf unserem git repo
-diese Seite öffnet dann ein bestimmtes pdf
+1. Das PDF im passenden Ordner ablegen.
+2. `00_templates/pdf_viewer_template.html` kopieren und den PDF-Pfad anpassen. Für eine externe Zielseite `00_templates/redirect_template.html` verwenden.
+3. Die HTML-Datei unter einem kurzen, dauerhaften Namen speichern und die veröffentlichte Adresse prüfen.
+4. Einen QR-Code für diese Adresse erstellen und vor dem Druck testen.
 
+## Anleitung aktualisieren
 
-## Ordner Verzeichnis
-01 - Anleitungen
-...
+Die neue PDF-Version unter demselben Namen ablegen und den Versionsparameter in der HTML-Seite ändern. Bereits gedruckte Adressen und QR-Codes müssen erhalten bleiben; auch Browser und Pages können ältere Inhalte vorübergehend zwischenspeichern.
 
-## Neue Files hinzufügen
-Um eine neue Anleitung hinzuzufügen muss im eine neue .html Datei angelegt werden (möglichst kurzer Name) code von pdf_viewer_template.html kopieren
-und ein pdf mit der Anleitung erstellt werden. Das pdf wird unter qr.wue.ch/xx/produkt_name im Vollscreen angezeigt.
-
-## File aktualisieren
-Neuste Version unter dem gleichen Namen ablegen, dann noch den Parameter v (Version) im html ergänzen, damit wird auch sicher das Neuste geladen.
-Kann etwas dauern, bis vom Browser die neue html Seite geladen wird.
-
-## Redirects hinzufügen
-Um auf eine Anleitung unter einer anderen Domain zu verweisen muss eine Kopie von redirect_template.html (mit möglichst kurzem Namen) erstellt werden und dort muss dann der Link der Ziel Adresse eingegeben werden. Die neue Adresse wird automatisch unter qr.wue.ch/produkt_name geöffnet
-
-## QR Code erstellen
-https://genqrcode.com/
-Sicherstellen, dass der qr auf qr.wue.ch zeigt und nicht auf die Seite des QR Anbieters
-
-http://qr.wue.ch/01/hy-alarm
+Die bestehende HY-Alarm-Anleitung liegt unter `01/hy-alarm.html`, das PDF unter `01/pdf/`. Die vorhandene QR-Grafik `01/qr_01_HY-Alarm.png` darf nicht überschrieben werden.
