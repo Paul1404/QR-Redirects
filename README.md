@@ -1,6 +1,6 @@
 # QR-Redirects
 
-Dieses Repository enthält kurze Adressen für QR-Codes auf Produktanleitungen. Die Seiten unter `01/` öffnen die zugehörigen PDFs oder leiten auf eine andere Anleitung weiter. Die veröffentlichte Adresse ist in `CNAME` hinterlegt.
+Dieses Repository enthält kurze Adressen für QR-Codes auf Produktanleitungen. Die Seiten unter `01/` öffnen die zugehörigen PDFs oder leiten auf eine andere Anleitung weiter. Die gewünschte Domain steht in `CNAME`; die Pages-Domain muss in GitHub entsprechend eingerichtet sein.
 
 ## Anleitung hinzufügen
 
